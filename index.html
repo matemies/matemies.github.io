@@ -82,8 +82,7 @@
             var map = new mapboxgl.Map({
                 container: 'map',
                 style: 'mapbox://styles/mapbox/light-v10',
-                zoom: 0.5,
-				attributionControl: false
+                zoom: 0.5
             });
          
             var months = [
@@ -113,12 +112,8 @@
          map.on('load', function() {
          d3.json(
          'https://backend.idmcdb.org/api/idus-view-flat-geojson',
-         //function (data){
-         //if (data.properties.year !== 2020) { return false }
          function(err, data) {
          if (err) throw err;
-         // Create a month property value based on time
-         // used to filter against.
          data.features = data.features.map(function(d) {
          if (d.properties.displacement_start_date_stamp < 1577836800) { return false };
          var b = new Date(d.properties.displacement_start_date_stamp);
@@ -175,10 +170,7 @@
          
          var coordinates = e.features[0].geometry.coordinates.slice();
          var description = e.features[0].properties.standard_popup_text;
-         
-         // Ensure that if the map is zoomed out such that multiple
-         // copies of the feature are visible, the popup appears
-         // over the copy being pointed to.
+        
          while (Math.abs(e.lngLat.lng - coordinates[0]) > 180) {
          coordinates[0] += e.lngLat.lng > coordinates[0] ? 360 : -360;
          }
@@ -196,12 +188,7 @@
          popup.remove();
          });
          });
-         
-         
-         
-         
-         // Set filter to first month of the year
-         // 0 = January
+     
          filterBy(0);
          
          document
