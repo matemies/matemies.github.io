@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html>
+   <head>
+      <meta charset="utf-8" />
+      <title>IDMC_IDU</title>
+      <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+      <script src="js/mapbox-gl.js"></script>
+      <link href="css/mapbox-gl.css" rel="stylesheet" />
+      <style>
+         body { margin: 0; padding: 0; }
+         #map { position: absolute; top: 0; bottom: 0; width: 100%; }
+      </style>
+   </head>
+   <body>
+      <style>
+         .map-overlay {
+         font: 12px/20px 'Helvetica Neue', Arial, Helvetica, sans-serif;
+         position: absolute;
+         width: 25%;
+         top: 0;
+         left: 0;
+         padding: 10px;
+         }
+         .map-overlay .map-overlay-inner {
+         background-color: #fff;
+         box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+         border-radius: 3px;
+         padding: 10px;
+         margin-bottom: 10px;
+         }
+         .map-overlay h2 {
+         line-height: 24px;
+         display: block;
+         margin: 0 0 10px;
+         }
+         .map-overlay .legend .leyenda {
+         height: 10px;
+         width: 100%;
+         border-radius: 50%;
+         }
+         .map-overlay input {
+         background-color: transparent;
+         display: inline-block;
+         width: 100%;
+         position: relative;
+         margin: 0;
+         cursor: ew-resize;
+         }
+         .mapboxgl-popup {
+         max-width: 400px;
+         font: 12px/20px 'Helvetica Neue', Arial, Helvetica, sans-serif;
+         }
+		 div.image {
+		     margin: 10px;
+			width: 70%;
+			height: 50%;
+			content:url("images/IDMC logo.png");
+		}​
+      </style>
+      <div id="map"></div>
+      <div class="map-overlay top">
+         <div class="map-overlay-inner">
+            <h2 style="color:#003561">New displacements by month in 2020</h2>
+            <label id="month"></label>
+            <input id="slider" type="range" min="0" max="11" step="1" value="0" />
+			 <a href="https://www.internal-displacement.org/"> <div class="image" ></div></a>
+         </div>
+         <div class="map-overlay-inner">
+            <div id="legend" class="legend">
+               <div class="leyenda"></div>
+               <div>New displacements due to disasters and conflict</div>
+               <div style="background-color: #fbb03b; width: 18px; height: 18px; display: inline-block; border-radius: 50%; align-self: center; margin: 0px 5px 0px 0px;"></div><div >Conflict</div>    <div style="background-color: #3bcefb; width: 18px; height: 18px; display: inline-block; border-radius: 50%; align-self: center; margin: 0px 5px 0px 0px;"></div><div >Disasters</div> <div style="background-color: #228b22; width: 18px; height: 18px; display: inline-block; border-radius: 50%; align-self: center; margin: 0px 5px 0px 0px;"></div><div >Development projects</div>
+               <div><span style="background-color: #3bcefb"></span><small>IDMC aggregates displacement data from diverse sources.</small></div>
+			   <div><span style="background-color: #3bcefb"></span><small> </small></div>
+			   
+            </div>
+         </div>
+      </div>
+      <script src="https://d3js.org/d3.v3.min.js" charset="utf-8"></script>
+      <script>
+         mapboxgl.accessToken = 'pk.eyJ1IjoiaWRtY2RhIiwiYSI6ImNqY2JyYTV3OTBrNWQzM3JxOGU1b25peTgifQ.gdpBNYy95OvXFrh-8EFw9Q';
+            var map = new mapboxgl.Map({
+                container: 'map',
+                style: 'mapbox://styles/mapbox/light-v10',
+                zoom: 0.5,
+				attributionControl: false
+            });
+         
+            var months = [
+         			'January',
+         			'February',
+         			'March',
+         			'April',
+         			'May',
+         			'June',
+         			'July',
+         			'August',
+         			'September',
+         			'October',
+         			'November',
+         			'December'
+         			];
+         			 
+         function filterBy(month) {
+         var filters = ['==', 'month', month];
+         map.setFilter('IDU-circles', filters);
+         
+         
+         // Set the label to the month
+         document.getElementById('month').textContent = months[month];
+         }
+         
+         map.on('load', function() {
+         d3.json(
+         'https://backend.idmcdb.org/api/idus-view-flat-geojson',
+         //function (data){
+         //if (data.properties.year !== 2020) { return false }
+         function(err, data) {
+         if (err) throw err;
+         // Create a month property value based on time
+         // used to filter against.
+         data.features = data.features.map(function(d) {
+         if (d.properties.displacement_start_date_stamp < 1577836800) { return false };
+         var b = new Date(d.properties.displacement_start_date_stamp);
+         var a =b*1000;
+         var c= new Date(a).getMonth();
+         d.properties.month= c;
+         return d;
+         });
+         
+         map.addSource('IDMC_IDU', {
+         'type': 'geojson',
+         data: data
+         });
+         
+         map.addLayer({
+         'id': 'IDU-circles',
+         'type': 'circle',
+         'source': 'IDMC_IDU',
+         'paint': {
+         'circle-color':[
+         'match',
+         ['get', 'displacement_type'],
+         'Conflict',
+         '#fbb03b',
+         'Disaster',
+         '#3bcefb',
+		  /* other */ '#228b22'
+         ],
+         'circle-opacity': 0.70,
+         'circle-radius': [
+         'interpolate',
+         ['linear'],
+         ['get', 'figure'],
+         100,
+         3,
+         1000,
+         6,
+         10000,
+         8,
+         100000,
+         12
+         ],
+         }
+         });
+         
+         var popup = new mapboxgl.Popup({
+         closeButton: false,
+         closeOnClick: false
+         });
+         
+         map.on('mouseenter', 'IDU-circles', function(e) {
+         // Change the cursor style as a UI indicator.
+         map.getCanvas().style.cursor = 'pointer';
+         
+         var coordinates = e.features[0].geometry.coordinates.slice();
+         var description = e.features[0].properties.standard_popup_text;
+         
+         // Ensure that if the map is zoomed out such that multiple
+         // copies of the feature are visible, the popup appears
+         // over the copy being pointed to.
+         while (Math.abs(e.lngLat.lng - coordinates[0]) > 180) {
+         coordinates[0] += e.lngLat.lng > coordinates[0] ? 360 : -360;
+         }
+         
+         // Populate the popup and set its coordinates
+         // based on the feature found.
+         popup
+         .setLngLat(coordinates)
+         .setHTML(description)
+         .addTo(map);
+         });
+         
+         map.on('mouseleave', 'IDU-circles', function() {
+         map.getCanvas().style.cursor = '';
+         popup.remove();
+         });
+         });
+         
+         
+         
+         
+         // Set filter to first month of the year
+         // 0 = January
+         filterBy(0);
+         
+         document
+         .getElementById('slider')
+         .addEventListener('input', function(e) {
+         var month = parseInt(e.target.value, 10);
+         filterBy(month);
+         });
+         });
+		// map.addControl(new mapboxgl.AttributionControl(), 'top-right');
+         //)});
+      </script>
+   </body>
+</html>
