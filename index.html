@@ -76,8 +76,15 @@
             </div>
          </div>
       </div>
-      <script src="https://d3js.org/d3.v3.min.js" charset="utf-8"></script>
+      <script src="https://d3js.org/d3.v3.min.js" charset="utf-8"></script><!-- Global site tag (gtag.js) - Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=UA-55042921-3"></script>
       <script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'UA-55042921-3');
+
          mapboxgl.accessToken = 'pk.eyJ1IjoiaWRtY2RhIiwiYSI6ImNqY2JyYTV3OTBrNWQzM3JxOGU1b25peTgifQ.gdpBNYy95OvXFrh-8EFw9Q';
             var map = new mapboxgl.Map({
                 container: 'map',
